@@ -5,7 +5,7 @@
 <div align="center">
 <h2>▶️ <a href="https://sarmad-lab-3d.vercel.app/">شاهد العرض المباشر · مختبر سرمد ثلاثي الأبعاد</a></h2>
 <p>بدون تثبيت وبدون سيرفر: اضغط الرابط واستكشف مختبر الأجهزة والإشارات ثلاثي الأبعاد (وضع العرض).</p>
-<p>🎥 <a href="https://github.com/user-attachments/assets/3f5b6086-23eb-42f0-896c-4ccae9078c9a">فيديو شرح المشروع</a> · 🎬 <a href="https://github.com/user-attachments/assets/1cbb39a0-79b3-4484-838d-c825ec96c1d5">فيديو طريقة التشغيل (Tutorial)</a></p>
+<p>🎥 <a href="https://github.com/user-attachments/assets/70233ad4-b292-4a86-b19e-3185d9bef7d1">فيديو شرح المشروع</a> · 🎬 <a href="https://github.com/user-attachments/assets/ef6ab150-611a-499b-ac9c-82ee7cb19252">فيديو طريقة التشغيل (Tutorial)</a></p>
 </div>
 
 ![ملخص النتائج](docs/images/results-summary.png)

@@ -7,7 +7,7 @@
 <div align="center">
 <h2>▶️ <a href="https://sarmad-lab-3d.vercel.app/">Live Demo · Sarmad 3D Lab</a></h2>
 <p>No install, no server: open the link and explore the devices-and-signals lab in 3D (presentation mode).</p>
-<p>🎥 <a href="https://github.com/user-attachments/assets/3f5b6086-23eb-42f0-896c-4ccae9078c9a">Project overview video</a> · 🎬 <a href="https://github.com/user-attachments/assets/1cbb39a0-79b3-4484-838d-c825ec96c1d5">System walkthrough video (Tutorial)</a></p>
+<p>🎥 <a href="https://github.com/user-attachments/assets/70233ad4-b292-4a86-b19e-3185d9bef7d1">Project overview video</a> · 🎬 <a href="https://github.com/user-attachments/assets/ef6ab150-611a-499b-ac9c-82ee7cb19252">System walkthrough video (Tutorial)</a></p>
 </div>
 
 ![Results summary](docs/images/results-summary.png)
