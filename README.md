@@ -4,6 +4,16 @@
 
 [العربية](README.ar.md) · Built for the IS CyberNext hackathon (AI & Cybersecurity track)
 
+<div align="center">
+
+## ▶️ [Live Demo · Sarmad 3D Lab](https://sarmad-lab-3d.vercel.app/)
+
+No install, no server: open the link and explore the devices-and-signals lab in 3D (presentation mode).
+
+🎥 [Project overview video](docs/videos/sarmad-intro.mp4) · 🎬 [System walkthrough video (Tutorial)](docs/videos/sarmad-demo.mp4)
+
+</div>
+
 ![Results summary](docs/images/results-summary.png)
 
 ##  Why We Built This
