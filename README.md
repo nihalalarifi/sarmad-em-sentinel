@@ -8,9 +8,15 @@
 
 ## ▶️ [Live Demo · Sarmad 3D Lab](https://sarmad-lab-3d.vercel.app/)
 
+
+
+
+
+
 No install, no server: open the link and explore the devices-and-signals lab in 3D (presentation mode).
 
-🎥 [Project overview video](docs/videos/sarmad-intro.mp4) · 🎬 [System walkthrough video (Tutorial)](docs/videos/sarmad-demo.mp4)
+🎥 [Project overview video]([docs/videos/sarmad-intro.mp4](https://github.com/user-attachments/assets/docs/videos/sarmad-intro.mp4
+) · 🎬 [System walkthrough video (Tutorial)](https://github.com/user-attachments/assets/docs/videos/sarmad-demo.mp4)
 
 </div>
 
