@@ -82,7 +82,7 @@ Demo flow: in the lab choose **Heavy work** (signal gets stronger, status stays 
 |---|---|
 | ![Dashboard](docs/images/dashboard-alert.png) | ![Lab](docs/images/lab-alert.png) |
 
-## 📊 Results
+##  Results
 
 Evaluated on an independent test set (new random seed, 1,500 normal and 600 attack windows per noise level), then end-to-end through the live system.
 
