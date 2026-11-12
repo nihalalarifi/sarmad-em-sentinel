@@ -6,11 +6,11 @@
 
 ![Results summary](docs/images/results-summary.png)
 
-## 💡 Why We Built This
+##  Why We Built This
 
 Air-gapped machines (no network, no USB) are the last line of defence for sensitive data. Published research, such as the RAMBO attack (2024), shows that malware inside such a machine can still leak data by switching CPU and memory activity on and off so that it radiates a signal a nearby receiver can decode. Network security tools never see this, because nothing crosses a network.
 
-## 🚀 Features
+##  Features
 
 - **Passive, external monitoring.** An EM probe and an SDR receiver sit next to the device; nothing is installed on it.
 - **Detects rhythm, not loudness.** A covert channel must switch on a fixed clock so its receiver can decode it. Sarmad measures that regularity, so heavy normal work does not trigger alarms.
@@ -19,7 +19,7 @@ Air-gapped machines (no network, no USB) are the last line of defence for sensit
 - **One alert per incident.** An alert fires only after 3 consecutive anomalous windows, and a new incident starts only after 10 normal ones.
 - **Live dashboard, 3D lab and signal simulator** connected over WebSockets.
 
-## 🏗️ Architecture
+##  Architecture
 
 ```mermaid
 flowchart LR
@@ -35,7 +35,7 @@ flowchart LR
 
 In this prototype the probe and SDR are replaced by a **signal simulator** that produces the same raw I/Q frames, built on published attack characteristics. The backend does not change when a real SDR is connected.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Technology | Purpose |
 |---|---|
@@ -47,11 +47,11 @@ In this prototype the probe and SDR are replaced by a **signal simulator** that 
 | three.js | Interactive 3D devices-and-signals lab |
 | Matplotlib | Evaluation figures |
 
-## ⚙️ Installation & Setup
+##  Installation & Setup
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/USERNAME/sarmad-em-sentinel.git
+git clone https://github.com/nihalalarifi/sarmad-em-sentinel.git
 cd sarmad-em-sentinel
 
 # 2. Create a virtual environment and install dependencies
@@ -66,7 +66,7 @@ python train.py
 python -m uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 
-## 📖 Usage
+##  Usage
 
 Open these pages (from another machine on the same network, replace `localhost` with the backend's IP):
 
@@ -101,13 +101,13 @@ Reproduce: `python evaluate.py && python make_figures.py`. Score a live run: `py
 
 **Limitations.** Results come from simulated signals, which are cleaner than real hardware. At 0 dB SNR, outside the training range, false positives rise to 63%, so the system must be recalibrated for each installation (supported from the dashboard). The stealth channel (slow, shallow keying) is harder: 95% at 10 dB, 80% at 0 dB.
 
-## 🧠 Technical Challenge
+##  Technical Challenge
 
 **Telling an attack apart from heavy normal work.** Heavy work produces a *stronger* signal than the covert channel, so a signal-strength threshold is close to random (AUC 0.54). We moved from loudness to timing: the switching instants of the demodulated carrier envelope are tested for phase coherence across candidate symbol rates (a Rayleigh test). Natural activity switches at random instants (low coherence); covert keying lands on a fixed clock (coherence near 1).
 
 **Choosing a model whose scores can be thresholded.** Our first choice, Isolation Forest, separated the classes (AUC 0.996), but its scores saturate, so attacks sat only slightly above the most unusual normal windows and no fixed threshold was reliable. We switched to k-NN novelty detection (distance to the learned normal behaviour) and calibrated it with conformal p-values on held-out normal windows, so a score of 0.70 means roughly 1 in 600 normal windows would look this unusual.
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 sarmad/        signals.py · features.py · model.py · engine.py · dataset.py
@@ -118,10 +118,10 @@ dashboard/     monitoring dashboard             simulator/    browser simulator
 lab/ vendor/   3D lab (three.js bundled offline) eval/         metrics and figures
 ```
 
-## 🔜 Next Steps
+##  Next Steps
 
 Replace the simulator with an RTL-SDR reader (`pyrtlsdr`) that sends the same frames to `/ws/sim`, then validate on real hardware.
 
-## 📄 License
+##  License
 
 MIT
