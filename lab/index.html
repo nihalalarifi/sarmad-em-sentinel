@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سرمد · مختبر الأجهزة والإشارات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A1620; --bench:#10222E; --grid:#1E3A48; --ink:#E4EEF0; --muted:#8FA7B0; --line:#244452;
+  --glass:rgba(10,22,32,.78); --signal:#3FE0C5; --signal-ink:#04211C; --alert:#FF6B5E; --amber:#F6B94C;
+  --board:#0F3B3A; --metal:#8E9CA4;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#E7EEEE; --bench:#D3DFE0; --grid:#B3C6C9; --ink:#0E2A33; --muted:#4F6A73; --line:#B9CBCF;
+    --glass:rgba(239,245,245,.86); --signal:#0E9C88; --signal-ink:#FFFFFF; --alert:#D9473B; --amber:#B7791F;
+    --board:#2F6F6B; --metal:#8B979D; color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#E7EEEE; --bench:#D3DFE0; --grid:#B3C6C9; --ink:#0E2A33; --muted:#4F6A73; --line:#B9CBCF;
+  --glass:rgba(239,245,245,.86); --signal:#0E9C88; --signal-ink:#FFFFFF; --alert:#D9473B; --amber:#B7791F;
+  --board:#2F6F6B; --metal:#8B979D; color-scheme:light;
+}
+:root[data-theme="dark"]{color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.6 "IBM Plex Sans Arabic",Tahoma,"Segoe UI",system-ui,sans-serif;
+  overflow:hidden;font-variant-numeric:tabular-nums}
+#stage{position:fixed;inset:0;display:block;width:100%;height:100%;outline:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* top bar */
+.top{position:fixed;top:0;inset-inline:0;padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 0;display:flex;align-items:flex-start;gap:14px;pointer-events:none;z-index:5}
+.brand{display:flex;gap:12px;align-items:center;pointer-events:auto}
+.mark{width:40px;height:40px;border:1.5px solid var(--signal);border-radius:9px;display:grid;place-items:center;color:var(--signal)}
+.brand h1{margin:0;font-size:21px;font-weight:600;letter-spacing:.2px}
+.brand p{margin:0;font-size:12.5px;color:var(--muted)}
+.top .sp{flex:1}
+.tool{pointer-events:auto;display:flex;gap:8px}
+.ibtn{background:var(--glass);border:1px solid var(--line);border-radius:10px;height:38px;min-width:38px;padding:0 11px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+/* labels over devices */
+.tag{position:fixed;z-index:3;transform:translate(-50%,-100%);pointer-events:auto;background:var(--glass);border:1px solid var(--line);
+  border-radius:999px;padding:3px 11px 3px 4px;font-size:12.5px;display:flex;gap:7px;align-items:center;white-space:nowrap;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:border-color .2s}
+.tag b{width:22px;height:22px;border-radius:50%;background:var(--signal);color:var(--signal-ink);display:grid;place-items:center;font-size:12px;font-weight:600}
+.tag.on{border-color:var(--signal)}
+[dir="rtl"] .tag{padding:3px 4px 3px 11px}
+
+/* info card */
+.card{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,0px) + 76px);inset-inline-end:20px;width:min(370px,calc(100% - 40px));
+  background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.card h2{margin:0 0 6px;padding-inline-end:26px;font-size:19px;font-weight:600;line-height:1.35}
+.card .lead{margin:0;color:var(--ink)}
+.card dl{margin:12px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px}
+.card dt{color:var(--muted)}
+.card dd{margin:0}
+.card .proto{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.card .x{position:absolute;top:10px;inset-inline-end:10px;background:none;border:0;color:var(--muted);font-size:20px;line-height:1;padding:4px 7px;border-radius:8px}
+.card .nav{display:flex;gap:8px;margin-top:14px;align-items:center}
+.card .prog{flex:1;height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.card .prog i{display:block;height:100%;width:0;background:var(--signal)}
+.btn{background:transparent;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13.5px}
+.btn.pri{background:var(--signal);border-color:var(--signal);color:var(--signal-ink);font-weight:600}
+
+/* scope */
+.scope{position:fixed;z-index:6;inset-inline-end:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);width:min(440px,calc(100% - 40px));
+  background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:14px 16px 12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.scope .head{display:flex;align-items:center;gap:10px}
+.scope h3{margin:0;font-size:14.5px;font-weight:600}
+.scope .sub{font-size:12px;color:var(--muted)}
+#scopeCv{width:100%;height:118px;display:block;margin-top:8px}
+.verdict{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:13.5px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--signal);flex:0 0 auto;box-shadow:0 0 10px var(--signal)}
+.verdict.warn .dot{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.verdict.bad .dot{background:var(--alert);box-shadow:0 0 12px var(--alert)}
+.verdict.bad b{color:var(--alert)}
+.meter{margin-inline-start:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.meter .bar{width:84px;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--signal);transition:width .4s}
+.verdict.bad .meter .bar i{background:var(--alert)}
+
+/* bottom dock */
+.dock{position:fixed;z-index:6;inset-inline:0;bottom:0;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;gap:12px;align-items:center;flex-wrap:wrap;pointer-events:none}
+.dock>*{pointer-events:auto}
+.chain{display:flex;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:5px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.chain button{background:none;border:0;border-radius:10px;padding:7px 11px;display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted)}
+.chain button b{width:21px;height:21px;border-radius:50%;border:1px solid var(--muted);display:grid;place-items:center;font-size:11.5px;font-weight:600}
+.chain button.on{color:var(--ink);background:color-mix(in srgb,var(--signal) 16%,transparent)}
+.chain button.on b{background:var(--signal);border-color:var(--signal);color:var(--signal-ink)}
+.chain .arrow{color:var(--line);font-size:13px}
+.tourbtn{white-space:nowrap;background:var(--signal);color:var(--signal-ink);border:0;border-radius:12px;padding:0 18px;height:46px;font-weight:600;font-size:15px;display:flex;align-items:center;gap:9px}
+.modes{display:flex;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:5px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.modes button{background:none;border:0;border-radius:10px;padding:7px 12px;font-size:13.5px;color:var(--muted)}
+.modes button.on{background:var(--ink);color:var(--bg)}
+.modes button[data-mode="covert"].on{background:var(--alert);color:#fff}
+.dock .sp{flex:1}
+.note{font-size:11.5px;color:var(--muted);max-width:280px}
+
+/* backend link + alert toast */
+.conn{pointer-events:auto;display:flex;align-items:center;gap:7px;background:var(--glass);border:1px solid var(--line);border-radius:10px;height:38px;padding:0 11px;font-size:12.5px;color:var(--muted);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.conn.live{color:var(--ink)}.conn.live i{background:var(--signal);box-shadow:0 0 8px var(--signal)}
+.toast{position:fixed;z-index:9;top:calc(env(safe-area-inset-top,0px) + 70px);left:50%;width:min(450px,calc(100% - 24px));
+  transform:translate(-50%,-14px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+  background:var(--glass);border:1px solid var(--alert);border-radius:16px;padding:14px 16px 14px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 14px 44px rgba(0,0,0,.35)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .row1{display:flex;gap:11px;align-items:center}
+.toast .ic{width:32px;height:32px;border-radius:50%;background:var(--alert);color:#fff;display:grid;place-items:center;flex:none}
+.toast h4{margin:0;font-size:16px;font-weight:600;color:var(--alert);line-height:1.3}
+.toast .sent{display:flex;gap:6px;align-items:center;font-size:13px;margin-top:1px}
+.toast .sent svg{color:var(--signal);flex:none}
+.toast .sent.demo{color:var(--muted)}
+.toast dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+.toast dt{color:var(--muted)}.toast dd{margin:0;unicode-bidi:plaintext}
+.toast .acts{display:flex;gap:8px;margin-top:12px}
+.toast .x{position:absolute;top:8px;inset-inline-end:8px;background:none;border:0;color:var(--muted);font-size:19px;padding:3px 7px;border-radius:8px}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+@media (max-width:900px){
+  body{font-size:14px}
+  .card{top:calc(env(safe-area-inset-top,0px) + 62px);inset-inline:12px;width:auto;max-height:38vh;overflow:auto;padding:14px}
+  .card h2{font-size:16.5px}.card .lead{font-size:13.5px}
+  .scope{inset-inline:12px;width:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 112px);padding:10px 12px}
+  #scopeCv{height:56px}
+  .scope .sub{display:none}
+  .dock{padding:0 12px calc(env(safe-area-inset-bottom,0px) + 10px);gap:8px}
+  .chain{order:2;width:100%;justify-content:space-between;overflow-x:auto}
+  .chain .t{display:none}
+  .chain .arrow{display:none}
+  .tourbtn{height:40px;flex:1;justify-content:center;font-size:14px;padding:0 10px}
+  .modes{flex:2;justify-content:space-between}
+  .modes button{padding:6px 8px;font-size:12.5px}
+  .note,.dock .sp{display:none}
+  .top{padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0}
+  .brand p{display:none}
+  .tag{font-size:11.5px}
+  .conn span{display:none}
+  .toast{top:calc(env(safe-area-inset-top,0px) + 60px)}
+}
+@media (prefers-reduced-motion: reduce){.meter .bar i{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="3D lab bench"></canvas>
+
+<header class="top">
+  <div class="brand">
+    <div class="mark" aria-hidden="true"><svg width="20" height="22" viewBox="0 0 20 22" fill="none"><path d="M12 1 3 13h6l-1 8 9-12h-6l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+    <div><h1 id="t_title"></h1><p id="t_sub"></p></div>
+  </div>
+  <div class="sp"></div>
+  <div class="tool">
+    <div class="conn" id="conn" role="status"><i></i><span id="connTxt"></span></div>
+    <button class="ibtn" id="resetBtn" aria-label="Reset view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="ibtn" id="themeBtn" aria-label="Theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/></svg></button>
+    <button class="ibtn" id="langBtn"></button>
+  </div>
+</header>
+
+<div id="tags"></div>
+
+<div class="toast" id="toast" role="alert" aria-live="assertive">
+  <button class="x" id="toastX" aria-label="Close">×</button>
+  <div class="row1">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 7v6M12 17h.01" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></span>
+    <div><h4 id="toastTitle"></h4>
+      <div class="sent" id="toastSent"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4 10-11" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="toastSentTxt"></span></div></div>
+  </div>
+  <dl id="toastMeta"></dl>
+  <div class="acts"><button class="btn pri" id="toastOpen"></button><button class="btn" id="toastClose"></button></div>
+</div>
+
+<aside class="card" id="card" hidden>
+  <button class="x" id="cardX" aria-label="Close">×</button>
+  <h2 id="cardTitle"></h2>
+  <p class="lead" id="cardLead"></p>
+  <dl id="cardSpecs"></dl>
+  <p class="proto" id="cardProto"></p>
+  <div class="nav" id="tourNav">
+    <button class="btn" id="prevBtn"></button>
+    <div class="prog"><i id="progBar"></i></div>
+    <button class="btn pri" id="nextBtn"></button>
+  </div>
+</aside>
+
+<section class="scope" aria-live="polite">
+  <div class="head"><h3 id="t_scope"></h3><span class="sub" id="t_scopeSub"></span></div>
+  <canvas id="scopeCv"></canvas>
+  <div class="verdict" id="verdict"><span class="dot"></span><span><b id="vTitle"></b> <span id="vText"></span></span>
+    <span class="meter"><span id="t_rhythm"></span><span class="bar"><i id="vBar"></i></span></span></div>
+</section>
+
+<nav class="dock">
+  <button class="tourbtn" id="tourBtn"></button>
+  <div class="chain" id="chain"></div>
+  <div class="modes" id="modes"></div>
+  <div class="sp"></div>
+  <p class="note" id="t_note"></p>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>if(!window.THREE||!THREE.OrbitControls){document.write('<script src="/vendor/three.min.js"><\/script><script src="/vendor/OrbitControls.js"><\/script>')}</script>
+<script>
+/* ================= text ================= */
+const TXT={
+ar:{dir:'rtl',lang:'EN',title:'سرمد',sub:'مختبر الأجهزة والإشارات',
+  scope:'ما يسمعه المجس',scopeSub:'غلاف إشارة ساعة المعالج، آخر 16 ms',rhythm:'الإيقاع',
+  connLive:'متصل بالباك اند',connNoSim:'متصل، بانتظار المحاكي',connDemo:'وضع العرض',
+  tt:{title:'انحراف مكتشَف',sent:'أُرسل التنبيه إلى لوحة سرمد',demo:'وضع العرض: عند تشغيل الباك اند يُرسَل هذا التنبيه إلى لوحة سرمد بنفس الرقم والوقت.',
+    open:'عرض في لوحة سرمد',close:'إغلاق',id:'رقم التنبيه',time:'الوقت',device:'الجهاز',score:'درجة الشذوذ',reason:'السبب'},
+  reasons:{periodicBurst:'نمط رشقات دورية',bandEnergyRise:'ارتفاع طاقة النطاق',spectralAnomaly:'شذوذ طيفي'},
+  feats:{periodicity:'الارتباط الدوري',onoff_regularity:'انتظام التشغيل/الإطفاء',rms_dbm:'سعة RMS',band_energy:'طاقة النطاق',bandwidth_khz:'عرض النطاق',spectral_flatness:'تسطّح الطيف'},
+  tour:'ابدأ الجولة',tourStop:'إيقاف الجولة',prev:'السابق',next:'التالي',done:'إنهاء',
+  modes:{idle:'خمول',workload:'حمل ثقيل',covert:'قناة خفية'},
+  note:'تصوّر مفاهيمي. الإشارات اصطناعية ومُبطّأة 500 مرة حتى يظهر الإيقاع.',
+  v:{idle:['طبيعي','نشاط منخفض وهادئ'],workload:['طبيعي','قوي لكن غير منتظم، فلا يُنبّه'],
+     check:['جارٍ التأكيد','إيقاع منتظم، نافذة {n} من 3'],alert:['انحراف مكتشَف','تشغيل/إطفاء على ساعة ثابتة']},
+  dev:[
+   {name:'الجهاز المحمي',lead:'جهاز يحمل بيانات حساسة ومعزول تمامًا: لا شبكة ولا USB. مع كل عملية يبدّل المعالج والذاكرة ملايين المرات في الثانية، وكل تبديل يسرّب مجالًا كهرومغناطيسيًا ضعيفًا تتبع قوته حجم العمل.',
+    specs:[['التسريب','توافقيات ساعة المعالج، ونشاط ناقل الذاكرة'],['العزل','بدون شبكة، بدون USB'],['تدخّل سرمد','لا شيء يُثبَّت على الجهاز']],
+    proto:'في النموذج الأولي: Raspberry Pi 4 أو لابتوب احتياطي كجهاز هدف.'},
+   {name:'المجس الكهرومغناطيسي',lead:'حلقة صغيرة تلتقط المجال المغناطيسي على بُعد سنتيمترات من المعالج. لا تلمس الجهاز ولا تحتاج كهرباء ولا برنامجًا.',
+    specs:[['النوع','مجس مجال قريب (H-field loop)'],['المسافة','من 1 إلى 5 سم فوق المعالج'],['التشغيل','سلبي بالكامل']],
+    proto:'في النموذج الأولي: طقم مجسات منخفض التكلفة أو حلقة من سلك محوري.'},
+   {name:'مستقبل SDR',lead:'راديو يُضبط على تردد ساعة المعالج، فيحوّل المجال الملتقط إلى عينات رقمية خام (I/Q) ويرسلها عبر USB.',
+    specs:[['الجهاز','RTL-SDR Blog V4'],['النطاق','من 500 kHz إلى 1.766 GHz'],['معدل العينات','في سرمد: 2.048 MS/s'],['التكلفة','قرابة 150 إلى 200 ريال']],
+    proto:'يمكن إضافة مكبر LNA بسيط إذا كانت الإشارة ضعيفة.'},
+   {name:'محطة التحليل',lead:'لابتوب يشغّل الباك اند ولوحة سرمد. يستخرج غلاف إشارة الساعة وخصائص توقيتها، ويقارنها بالسلوك الطبيعي الذي تعلّمه الذكاء الاصطناعي.',
+    specs:[['البرمجيات','Python و FastAPI'],['الذكاء الاصطناعي','k-NN novelty، تدرّب على الطبيعي فقط'],['المخرجات','درجة شذوذ، وسبب، وتنبيه']],
+    proto:'التنبيه يصدر بعد 3 نوافذ متتالية فوق الحد لتقليل الإنذارات الكاذبة.'}],
+  tourSteps:[
+   {t:'أربعة أجهزة، ولا شيء يلمس الجهاز المحمي',l:'جهاز معزول، ومجس صغير فوقه، وراديو SDR، ولابتوب للتحليل. تابع الإشارة من مصدرها حتى التنبيه.'},
+   {dev:0},{dev:1},{dev:2},{dev:3},
+   {t:'الحمل الثقيل لا يكفي للتنبيه',l:'عند العمل الثقيل تقوى الإشارة كثيرًا، لكن تبديلاتها تحدث في لحظات عشوائية. سرمد تعلّم هذا السلوك فيبقى أخضر.',mode:'workload'},
+   {t:'الإيقاع المنتظم يفضح القناة الخفية',l:'البرنامج الخبيث يشغّل ويطفئ النشاط على ساعة ثابتة ليفهمه المستقبل: تشغيل، إطفاء، تشغيل، تشغيل. هذا الانتظام هو ما يكشفه سرمد، ويصدر التنبيه بعد 3 نوافذ متسقة.',mode:'covert'}]},
+en:{dir:'ltr',lang:'ع',title:'Sarmad',sub:'Devices and signals lab',
+  scope:'What the probe hears',scopeSub:'Clock-carrier envelope, last 16 ms',rhythm:'Rhythm',
+  connLive:'Backend connected',connNoSim:'Connected, waiting for the simulator',connDemo:'Presentation mode',
+  tt:{title:'Anomaly detected',sent:'Alert sent to the Sarmad dashboard',demo:'Presentation mode: with the backend running, this alert reaches the Sarmad dashboard with the same ID and time.',
+    open:'View in dashboard',close:'Close',id:'Alert ID',time:'Time',device:'Device',score:'Anomaly score',reason:'Reason'},
+  reasons:{periodicBurst:'Periodic burst pattern',bandEnergyRise:'Band energy rise',spectralAnomaly:'Spectral anomaly'},
+  feats:{periodicity:'periodic correlation',onoff_regularity:'on/off regularity',rms_dbm:'RMS amplitude',band_energy:'band energy',bandwidth_khz:'bandwidth',spectral_flatness:'spectral flatness'},
+  tour:'Start the tour',tourStop:'Stop the tour',prev:'Back',next:'Next',done:'Finish',
+  modes:{idle:'Idle',workload:'Heavy work',covert:'Covert channel'},
+  note:'Conceptual visualisation. Signals are synthetic and slowed down 500× so the rhythm is visible.',
+  v:{idle:['Normal','low, quiet activity'],workload:['Normal','strong but irregular, so no alert'],
+     check:['Confirming','regular rhythm, window {n} of 3'],alert:['Anomaly detected','on/off keying on a fixed clock']},
+  dev:[
+   {name:'Protected computer',lead:'A machine holding sensitive data, fully isolated: no network, no USB. Its processor and memory switch millions of times per second, and every switch leaks a weak electromagnetic field whose strength follows the work being done.',
+    specs:[['Leaks','CPU clock harmonics, memory-bus activity'],['Isolation','No network, no USB'],['Sarmad on it','Nothing installed']],
+    proto:'Prototype target: a Raspberry Pi 4 or a spare laptop.'},
+   {name:'EM probe',lead:'A small loop that picks up the magnetic field a few centimetres above the processor. It never touches the machine and needs no power or software.',
+    specs:[['Type','Near-field H-field loop'],['Distance','1–5 cm from the CPU'],['Operation','Fully passive']],
+    proto:'Prototype: a low-cost near-field probe kit or a hand-made coax loop.'},
+   {name:'SDR receiver',lead:'A software-defined radio tuned to the processor’s clock. It turns the captured field into raw digital I/Q samples and passes them over USB.',
+    specs:[['Device','RTL-SDR Blog V4'],['Range','500 kHz – 1.766 GHz'],['Sample rate','2.048 MS/s in Sarmad'],['Cost','about 40 USD']],
+    proto:'A simple LNA can be added if the signal is weak.'},
+   {name:'Analysis station',lead:'A laptop running the Sarmad backend and dashboard. It extracts the clock carrier’s envelope and its timing, and compares them with the normal behaviour the AI has learned.',
+    specs:[['Software','Python and FastAPI'],['AI','k-NN novelty, trained on normal data only'],['Output','Anomaly score, reason, alert']],
+    proto:'Alerts fire after 3 consecutive windows above the threshold to keep false alarms down.'}],
+  tourSteps:[
+   {t:'Four devices, and nothing touches the protected one',l:'An isolated computer, a small probe above it, an SDR radio and an analysis laptop. Follow the signal from its source to the alert.'},
+   {dev:0},{dev:1},{dev:2},{dev:3},
+   {t:'Heavy work alone does not raise an alert',l:'Under heavy load the signal gets much stronger, but its switches happen at random moments. Sarmad has learned this, so it stays green.',mode:'workload'},
+   {t:'A steady rhythm gives the covert channel away',l:'The malware switches activity on and off on a fixed clock so its receiver can decode it: on, off, on, on. That regularity is what Sarmad detects, raising an alert after 3 consistent windows.',mode:'covert'}]}};
+let lang=(()=>{try{return localStorage.getItem('lab_lang')||'ar'}catch(e){return 'ar'}})();
+const L=()=>TXT[lang];
+
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const U=(a=0,b=1)=>a+(b-a)*Math.random();
+
+/* ================= activity model (same idea as the simulator) =================
+   virtual time runs 500x slower than real time: 2 ms of signal per real second */
+const SLOW=0.002;
+const ACT={mode:'idle',segEnd:0,level:0.22,vt:0,hist:[],lastLevel:0.22,rise:false,since:0,bitIdx:0};
+function nextSeg(){
+  const m=ACT.mode;
+  if(m==='idle'){ACT.level=0.22+U(-0.02,0.02)+(Math.random()<0.08?U(0.05,0.12):0);ACT.segEnd=ACT.vt+U(0.2,0.6)*1e-3}
+  else if(m==='workload'){ACT.level=U(0.30,1.0);ACT.segEnd=ACT.vt+Math.max(0.05e-3,-0.6e-3*Math.log(1-Math.random()))}
+  else{const Ts=0.5e-3;ACT.level=Math.random()<0.5?0.9:0.22;const k=Math.floor(ACT.vt/Ts)+1;ACT.segEnd=k*Ts}
+}
+const DT_S=20e-6,KEEP=800;   // one display sample = 20 us of signal; 800 samples = 16 ms
+let vacc=0;
+function stepActivity(dtReal,quiet){
+  vacc+=dtReal*SLOW;
+  while(vacc>=DT_S){vacc-=DT_S;ACT.vt+=DT_S;
+    if(ACT.vt>=ACT.segEnd){const before=ACT.level;nextSeg();if(!quiet&&ACT.level-before>0.2)ACT.rise=true}
+    ACT.hist.push(Math.max(0,Math.min(1.15,ACT.level+U(-0.025,0.025))))}
+  if(ACT.hist.length>KEEP)ACT.hist.splice(0,ACT.hist.length-KEEP);
+  ACT.since+=dtReal;
+}
+function setMode(m){ACT.mode=m;ACT.segEnd=0;ACT.since=0;NET.demoFired=false;sendScenario();
+  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m))}
+const curA=()=>ACT.hist.length?ACT.hist[ACT.hist.length-1]:0.22;
+
+/* ================= link to the Sarmad backend =================
+   When this page is served by the backend (http://<laptop2>:8000/lab) it joins the
+   dashboard channel: mode buttons switch the simulator's scenario, the verdict and
+   the trace come from the real analysis, and real alerts pop up here at the same
+   moment they reach the dashboard. Elsewhere it runs in presentation mode. */
+const NET={ws:null,live:false,win:null,lastWin:0,connectedAt:0,seen:new Set(),demoFired:false,demoN:0,lastAlert:null};
+const SCEN={idle:'idle',workload:'active',covert:'covert_fast'};
+function backendUrl(){
+  const q=new URLSearchParams(location.search).get('ws');if(q)return q;
+  if(location.protocol.startsWith('http')&&location.pathname.startsWith('/lab'))return (location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws';
+  return null}
+function liveData(){return NET.live&&NET.win&&performance.now()-NET.lastWin<3500}
+function sendScenario(){if(NET.live&&NET.ws&&NET.ws.readyState===1)NET.ws.send(JSON.stringify({type:'scenario',scenario:SCEN[ACT.mode]}))}
+function connectBackend(){
+  const u=backendUrl();if(!u){renderConn();return}
+  let w;try{w=new WebSocket(u)}catch(e){renderConn();return}
+  NET.ws=w;
+  w.onopen=()=>{NET.live=true;NET.connectedAt=Date.now();renderConn();sendScenario()};
+  w.onclose=()=>{if(NET.ws!==w)return;NET.live=false;NET.win=null;renderConn();setTimeout(connectBackend,4000)};
+  w.onerror=()=>{try{w.close()}catch(e){}};
+  w.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(err){return}
+    if(m.type==='window'){NET.win=m;NET.lastWin=performance.now()}
+    else if(m.type==='alert')onBackendAlert(m)};
+}
+function onBackendAlert(a){
+  if(a.status!=='open'||NET.seen.has(a.id))return;NET.seen.add(a.id);
+  const t=Date.parse(a.ts);if(!isNaN(t)&&Date.now()-t>15000)return;   // older alerts replayed on connect
+  NET.lastAlert=a;showToast(a,true)}
+function renderConn(){const T=L(),el=$('#conn');if(!el)return;
+  const live=NET.live,data=liveData();el.className='conn'+(live?' live':'');
+  $('#connTxt').textContent=live?(data?T.connLive:T.connNoSim):T.connDemo}
+
+/* alert toast */
+let toastTimer=null;
+function hhmmss(ts){const d=new Date(ts);return isNaN(d)?'—':d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+function showToast(a,real){
+  const T=L(),tt=T.tt;
+  $('#toastTitle').textContent=tt.title;
+  $('#toastSentTxt').textContent=real?tt.sent:tt.demo;
+  $('#toastSent').classList.toggle('demo',!real);
+  $('#toastSent').querySelector('svg').style.display=real?'':'none';
+  const top=(a.reason&&a.reason.top_features||[]).map(k=>T.feats[k]||k);
+  const reason=(a.reason&&T.reasons[a.reason.code])||T.reasons.spectralAnomaly;
+  $('#toastMeta').innerHTML=[[tt.id,a.id],[tt.time,hhmmss(a.ts)],[tt.device,a.device||'WS-LAB-03'],
+    [tt.score,(+a.score).toFixed(2)],[tt.reason,reason+(top.length?' ('+top.join(lang==='ar'?'، ':', ')+')':'')]]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('#toastOpen').textContent=tt.open;$('#toastOpen').hidden=!real;$('#toastClose').textContent=tt.close;
+  $('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,12000)}
+function hideToast(){$('#toast').classList.remove('show')}
+
+/* ================= three.js scene ================= */
+const canvas=$('#stage');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,0.1,100);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=0.08;controls.maxPolarAngle=Math.PI*0.47;controls.minDistance=2.2;controls.maxDistance=28;controls.enablePan=false;
+const HOME={pos:new THREE.Vector3(4.2,5.4,8.4),tgt:new THREE.Vector3(0.6,0.3,0.2)};
+camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);
+
+const hemi=new THREE.HemisphereLight(0xcfe9ee,0x0b1a22,0.75);scene.add(hemi);
+const key=new THREE.DirectionalLight(0xffffff,0.8);key.position.set(4,8,5);scene.add(key);
+const rim=new THREE.DirectionalLight(0x3fe0c5,0.35);rim.position.set(-6,3,-4);scene.add(rim);
+
+const C=c=>new THREE.Color(c);
+const mats={};
+const lin=c=>new THREE.Color(c).convertSRGBToLinear();
+function std(color,rough=0.6,metal=0.1,extra={}){return new THREE.MeshStandardMaterial(Object.assign({color:lin(color),roughness:rough,metalness:metal},extra))}
+function box(w,h,d,mat,x=0,y=0,z=0,parent=scene){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);parent.add(m);return m}
+function cyl(rt,rb,h,mat,x=0,y=0,z=0,parent=scene,seg=24){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat);m.position.set(x,y,z);parent.add(m);return m}
+
+/* bench */
+mats.bench=std(0x10222e,0.85,0.05);
+const bench=box(10,0.16,5.6,mats.bench,0,-0.08,0);
+mats.leg=std(0x0c1a23,0.7,0.3);
+[[-4.7,-2.6],[4.7,-2.6],[-4.7,2.6],[4.7,2.6]].forEach(([x,z])=>box(0.14,2.2,0.14,mats.leg,x,-1.25,z));
+let grid=new THREE.GridHelper(9.6,32,0x1e3a48,0x1e3a48);grid.scale.z=5.2/9.6;grid.position.y=0.002;grid.material.transparent=true;grid.material.opacity=0.55;scene.add(grid);
+
+/* ---- device 0: protected computer (open test bench) ---- */
+const G0=new THREE.Group();G0.position.set(-2.5,0,-0.2);scene.add(G0);
+mats.board=std(0x0f3b3a,0.55,0.15);
+mats.chip=std(0x9aa7ae,0.35,0.85);
+mats.dark=std(0x0d1a20,0.6,0.3);
+mats.ram=std(0x16343c,0.5,0.3);
+mats.gold=std(0xd8a842,0.35,0.9);
+[[-1.1,-0.85],[1.1,-0.85],[-1.1,0.85],[1.1,0.85]].forEach(([x,z])=>cyl(0.04,0.04,0.28,mats.chip,x,0.14,z,G0,10));
+const board=box(2.5,0.05,1.95,mats.board,0,0.3,0,G0);
+const cpuGlowMat=new THREE.MeshStandardMaterial({color:lin(0x9aa7ae),roughness:0.35,metalness:0.8,emissive:new THREE.Color(0x3fe0c5),emissiveIntensity:0});
+box(0.62,0.04,0.62,mats.dark,-0.25,0.345,0,G0);
+const cpu=box(0.5,0.05,0.5,cpuGlowMat,-0.25,0.385,0,G0);
+for(let i=0;i<4;i++){const r=box(0.09,0.34,1.25,mats.ram,0.55+i*0.16,0.5,0,G0);box(0.092,0.04,1.1,mats.gold,0.55+i*0.16,0.34,0,G0);
+  for(let k=0;k<4;k++)box(0.095,0.12,0.18,mats.dark,0.55+i*0.16,0.52,-0.42+k*0.28,G0)}
+for(let i=0;i<6;i++)box(0.12,0.1,0.12,mats.dark,-0.9,0.38,-0.62+i*0.25,G0);
+for(let i=0;i<5;i++)box(0.02,0.006,1.6,mats.gold,-0.62+i*0.07,0.33,0.05,G0).material=std(0x2c6d63,0.4,0.6);
+box(0.5,0.22,0.36,mats.dark,-0.85,0.43,0.72,G0);
+// glass enclosure frame
+const frameMat=std(0x5d7480,0.4,0.7);
+[[-1.25,-0.98],[1.25,-0.98],[-1.25,0.98],[1.25,0.98]].forEach(([x,z])=>cyl(0.018,0.018,1.05,frameMat,x,0.53,z,G0,8));
+const glass=new THREE.Mesh(new THREE.BoxGeometry(2.5,1.05,1.96),new THREE.MeshStandardMaterial({color:0x7fd6e6,transparent:true,opacity:0.07,roughness:0.1,metalness:0,depthWrite:false}));
+glass.position.set(0,0.53,0);G0.add(glass);
+// unplugged network cable (air gap)
+mats.cable=std(0x2b3f49,0.7,0.1);
+const netCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(-3.95,0.03,-1.6),new THREE.Vector3(-4.3,0.03,-0.8),new THREE.Vector3(-4.1,0.03,0.3),new THREE.Vector3(-3.95,0.05,0.95)]);
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(netCurve,40,0.025,8,false),std(0x6b4b2c,0.7,0.1)));
+box(0.12,0.08,0.16,new THREE.MeshStandardMaterial({color:0xcfd8dc,transparent:true,opacity:0.6}),-3.95,0.06,1.05);
+
+/* ---- device 1: probe on a stand ---- */
+const CPUW=new THREE.Vector3(-2.75,0.39,-0.2);   // cpu world position
+const probeY=0.82;
+mats.stand=std(0x56707c,0.35,0.85);
+cyl(0.32,0.36,0.06,mats.dark,-1.15,0.03,1.35);
+cyl(0.03,0.03,1.6,mats.stand,-1.15,0.83,1.35,scene,12);
+const arm=new THREE.CatmullRomCurve3([new THREE.Vector3(-1.15,1.6,1.35),new THREE.Vector3(-1.7,1.55,0.9),new THREE.Vector3(-2.4,1.2,0.25),new THREE.Vector3(-2.75,probeY+0.12,-0.2)]);
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(arm,40,0.028,8,false),mats.stand));
+const probeMat=new THREE.MeshStandardMaterial({color:lin(0xc9d4d9),roughness:0.3,metalness:0.9,emissive:new THREE.Color(0x3fe0c5),emissiveIntensity:0.2});
+const probe=new THREE.Mesh(new THREE.TorusGeometry(0.17,0.022,12,40),probeMat);
+probe.rotation.x=Math.PI/2;probe.position.set(CPUW.x,probeY,CPUW.z);scene.add(probe);
+
+/* ---- device 2: SDR dongle ---- */
+const G2=new THREE.Group();G2.position.set(0.55,0,0.85);G2.rotation.y=-0.35;scene.add(G2);
+mats.alu=std(0x7f8f98,0.32,0.9);
+box(0.72,0.14,0.26,mats.alu,0,0.07,0,G2);
+box(0.03,0.15,0.27,mats.dark,-0.2,0.07,0,G2);box(0.03,0.15,0.27,mats.dark,0.2,0.07,0,G2);
+cyl(0.045,0.045,0.12,mats.gold,-0.42,0.07,0,G2,16).rotation.z=Math.PI/2;
+box(0.16,0.08,0.18,mats.chip,0.44,0.07,0,G2);
+const ledMat=new THREE.MeshBasicMaterial({color:0x3fe0c5});
+const led=new THREE.Mesh(new THREE.SphereGeometry(0.022,12,12),ledMat);led.position.set(0.1,0.145,0.08);G2.add(led);
+
+/* ---- device 3: analysis laptop ---- */
+const G3=new THREE.Group();G3.position.set(2.75,0,-0.15);G3.rotation.y=-0.45;scene.add(G3);
+mats.lap=std(0x3a4a53,0.45,0.6);
+box(2.0,0.07,1.35,mats.lap,0,0.035,0,G3);
+box(1.7,0.005,0.7,mats.dark,0,0.073,-0.12,G3);
+box(0.55,0.005,0.32,std(0x2b3940,0.5,0.4),0,0.073,0.42,G3);
+const hinge=new THREE.Group();hinge.position.set(0,0.07,-0.67);hinge.rotation.x=-0.28;G3.add(hinge);
+box(2.0,1.3,0.05,mats.lap,0,0.65,0,hinge);
+const scr=document.createElement('canvas');scr.width=768;scr.height=480;
+const scrTex=new THREE.CanvasTexture(scr);scrTex.encoding=THREE.sRGBEncoding;
+const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.86,1.16),new THREE.MeshBasicMaterial({map:scrTex,toneMapped:false}));
+screen.position.set(0,0.65,0.027);hinge.add(screen);
+
+/* ---- cables ---- */
+const sdrIn=new THREE.Vector3();G2.localToWorld(sdrIn.set(-0.48,0.07,0));
+const sdrOut=new THREE.Vector3();G2.localToWorld(sdrOut.set(0.52,0.07,0));
+const lapIn=new THREE.Vector3();G3.localToWorld(lapIn.set(-1.0,0.04,0.2));
+const coax=new THREE.CatmullRomCurve3([new THREE.Vector3(-2.6,probeY+0.06,-0.15),new THREE.Vector3(-2.2,1.25,0.35),new THREE.Vector3(-1.7,1.45,0.95),
+  new THREE.Vector3(-1.1,0.5,1.6),new THREE.Vector3(-0.6,0.03,1.55),new THREE.Vector3(0.0,0.03,1.05),sdrIn]);
+mats.coax=std(0x1d2a31,0.6,0.2);
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(coax,120,0.022,8,false),mats.coax));
+const usb=new THREE.CatmullRomCurve3([sdrOut,new THREE.Vector3(1.2,0.03,0.95),new THREE.Vector3(1.55,0.03,0.55),lapIn]);
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(usb,60,0.02,8,false),mats.coax));
+
+/* ---- EM field rings ---- */
+const RINGS=[];
+for(let i=0;i<28;i++){const m=new THREE.Mesh(new THREE.RingGeometry(0.96,1.0,64),new THREE.MeshBasicMaterial({color:0x3fe0c5,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));
+  m.rotation.x=-Math.PI/2;m.position.copy(CPUW);m.visible=false;m.userData={t:1,life:1.4,amp:0};scene.add(m);RINGS.push(m)}
+function spawnRing(amp){const r=RINGS.find(x=>!x.visible);if(!r)return;r.visible=true;r.userData.t=0;r.userData.amp=amp;r.position.y=CPUW.y+0.02}
+
+/* ---- signal particles ---- */
+const PARTS=[];
+const pGeo=new THREE.SphereGeometry(0.035,10,10);
+for(let i=0;i<60;i++){const m=new THREE.Mesh(pGeo,new THREE.MeshBasicMaterial({color:0x3fe0c5,transparent:true,opacity:0.95}));m.visible=false;m.userData={u:0,path:coax,dur:1.6};scene.add(m);PARTS.push(m)}
+function spawnPart(path,dur){const p=PARTS.find(x=>!x.visible);if(!p)return;p.visible=true;p.userData={u:0,path,dur};p.position.copy(path.getPointAt(0))}
+
+/* ---- device anchors for tags and camera views ---- */
+const DEVS=[
+ {group:G0,anchor:new THREE.Vector3(-3.55,1.2,-0.9),view:{pos:new THREE.Vector3(-1.2,2.5,2.6),tgt:new THREE.Vector3(-2.5,0.45,-0.2)},hit:[board,cpu,glass]},
+ {group:null,anchor:new THREE.Vector3(-1.15,1.8,1.35),view:{pos:new THREE.Vector3(-0.6,1.9,1.9),tgt:new THREE.Vector3(-2.3,0.75,0)},hit:[probe]},
+ {group:G2,anchor:new THREE.Vector3(0.55,0.55,0.85),view:{pos:new THREE.Vector3(1.6,1.35,2.6),tgt:new THREE.Vector3(0.45,0.1,0.85)},hit:[]},
+ {group:G3,anchor:new THREE.Vector3(2.75,1.75,-0.4),view:{pos:new THREE.Vector3(4.6,2.0,2.4),tgt:new THREE.Vector3(2.5,0.65,-0.5)},hit:[screen]}];
+G2.traverse(o=>{if(o.isMesh)DEVS[2].hit.push(o)});G3.traverse(o=>{if(o.isMesh)DEVS[3].hit.push(o)});G0.traverse(o=>{if(o.isMesh)DEVS[0].hit.push(o)});
+
+/* ================= theming of the 3D scene ================= */
+function themeScene(){
+  const bg=C(cssv('--bg'));scene.background=bg;scene.fog=new THREE.Fog(bg,14,30);
+  mats.bench.color.copy(lin(cssv('--bench')));
+  grid.material.color.set(cssv('--grid'));
+  const sig=C(cssv('--signal'));SIG=sig.clone();
+  RINGS.forEach(r=>r.material.color.copy(sig));PARTS.forEach(p=>p.material.color.copy(sig));
+  cpuGlowMat.emissive.copy(sig);probeMat.emissive.copy(sig);
+  const light=document.documentElement.getAttribute('data-theme')==='light'||(!document.documentElement.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: light)').matches);
+  hemi.intensity=light?1.05:0.75;
+  RINGS.forEach(r=>r.material.blending=light?THREE.NormalBlending:THREE.AdditiveBlending);
+}
+
+/* ================= UI build ================= */
+let SIG=new THREE.Color(0x3fe0c5);
+let selected=-1,tour={on:false,step:0,t:0};
+const STEP_SEC=[11,13,12,12,13,14,17];
+function buildUI(){
+  const T=L();document.documentElement.lang=lang==='ar'?'ar':'en';document.documentElement.dir=T.dir;
+  $('#t_title').textContent=T.title;$('#t_sub').textContent=T.sub;$('#langBtn').textContent=T.lang;
+  $('#t_scope').textContent=T.scope;$('#t_scopeSub').textContent=T.scopeSub;$('#t_rhythm').textContent=T.rhythm;
+  $('#t_note').textContent=T.note;$('#prevBtn').textContent=T.prev;
+  $('#tourBtn').innerHTML=(tour.on?'<svg width="14" height="14" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24"><path d="M7 4v16l13-8Z" fill="currentColor"/></svg>')+'<span>'+(tour.on?T.tourStop:T.tour)+'</span>';
+  $('#chain').innerHTML=T.dev.map((d,i)=>(i?'<span class="arrow">'+(T.dir==='rtl'?'←':'→')+'</span>':'')+`<button data-dev="${i}" class="${i===selected?'on':''}"><b>${i+1}</b><span class="t">${d.name}</span></button>`).join('');
+  document.querySelectorAll('#chain button').forEach(b=>b.onclick=()=>{stopTour();openDevice(+b.dataset.dev)});
+  $('#modes').innerHTML=['idle','workload','covert'].map(m=>`<button data-mode="${m}" class="${m===ACT.mode?'on':''}">${T.modes[m]}</button>`).join('');
+  document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+  $('#tags').innerHTML=T.dev.map((d,i)=>`<button class="tag ${i===selected?'on':''}" data-dev="${i}"><b>${i+1}</b>${d.name}</button>`).join('');
+  document.querySelectorAll('#tags .tag').forEach(b=>b.onclick=()=>{stopTour();openDevice(+b.dataset.dev)});
+  if(tour.on)showStep(tour.step,false);else if(selected>=0)fillDevice(selected);
+  renderConn();
+}
+function fillDevice(i){const d=L().dev[i];
+  $('#cardTitle').textContent=d.name;$('#cardLead').textContent=d.lead;
+  $('#cardSpecs').innerHTML=d.specs.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');$('#cardSpecs').hidden=false;
+  $('#cardProto').textContent=d.proto;$('#cardProto').hidden=false}
+function markSel(){document.querySelectorAll('#chain button,#tags .tag').forEach(b=>b.classList.toggle('on',+b.dataset.dev===selected))}
+function openDevice(i){controls.autoRotate=false;selected=i;fillDevice(i);$('#tourNav').hidden=true;$('#card').hidden=false;flyTo(DEVS[i].view);markSel()}
+function closeCard(){$('#card').hidden=true;selected=-1;markSel();stopTour()}
+
+/* camera flight */
+let fly=null;
+function flyTo(v,dur=1.6){fly={p0:camera.position.clone(),t0:controls.target.clone(),p1:v.pos.clone(),t1:v.tgt.clone(),t:0,dur:reduce?0.01:dur}}
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+/* tour */
+function showStep(i,move=true){
+  const T=L(),s=T.tourSteps[i];tour.step=i;
+  $('#card').hidden=false;$('#tourNav').hidden=false;
+  if(s.dev!==undefined){fillDevice(s.dev);selected=s.dev;if(move)flyTo(DEVS[s.dev].view)}
+  else{$('#cardTitle').textContent=s.t;$('#cardLead').textContent=s.l;$('#cardSpecs').hidden=true;$('#cardProto').hidden=true;selected=-1;
+    if(move)flyTo(i===0?HOME:{pos:new THREE.Vector3(-0.4,2.6,3.4),tgt:new THREE.Vector3(-1.9,0.6,0)})}
+  if(move){if(s.mode)setMode(s.mode);else if(i<=4)setMode('idle')}
+  $('#nextBtn').textContent=i===T.tourSteps.length-1?T.done:T.next;$('#prevBtn').disabled=i===0;markSel()}
+function startTour(){controls.autoRotate=false;tour={on:true,step:0,t:0};buildUI();showStep(0)}
+function stopTour(){if(!tour.on)return;tour.on=false;buildUI()}
+$('#tourBtn').onclick=()=>tour.on?stopTour():startTour();
+$('#nextBtn').onclick=()=>{if(!tour.on){tour.on=true;buildUI()}const n=tour.step+1;if(n>=L().tourSteps.length){tour.on=false;$('#card').hidden=true;selected=-1;buildUI();flyTo(HOME);return}tour.t=0;showStep(n)};
+$('#prevBtn').onclick=()=>{tour.t=0;showStep(Math.max(0,tour.step-1))};
+$('#cardX').onclick=closeCard;
+$('#toastX').onclick=hideToast;$('#toastClose').onclick=hideToast;
+$('#toastOpen').onclick=()=>{hideToast();window.open('/#alerts','sarmad-dashboard')};
+$('#resetBtn').onclick=()=>{closeCard();flyTo(HOME)};
+$('#langBtn').onclick=()=>{lang=lang==='ar'?'en':'ar';try{localStorage.setItem('lab_lang',lang)}catch(e){}buildUI()};
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  const nx=cur==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',nx);try{localStorage.setItem('lab_theme',nx)}catch(e){}themeScene()};
+try{const th=localStorage.getItem('lab_theme');if(th)document.documentElement.setAttribute('data-theme',th)}catch(e){}
+matchMedia('(prefers-color-scheme: light)').addEventListener('change',themeScene);
+
+/* picking */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downAt=null;
+canvas.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY];controls.autoRotate=false});
+canvas.addEventListener('pointerup',e=>{if(!downAt||Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;
+  const r=canvas.getBoundingClientRect();mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);
+  let best=null;DEVS.forEach((d,i)=>{const h=ray.intersectObjects(d.hit,false)[0];if(h&&(!best||h.distance<best.d))best={i,d:h.distance}});
+  if(best){stopTour();openDevice(best.i)}});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeCard()});
+
+/* ================= 2D drawing: scope + laptop screen ================= */
+function status(){
+  const T=L().v;
+  if(liveData()){const w=NET.win,per=(w.features||[]).find(f=>f.key==='periodicity'),r=per?per.value:0.2;
+    if(w.status==='alert'){const rs=w.reason&&L().reasons[w.reason.code];return{k:'bad',t:[T.alert[0],rs||T.alert[1]],r}}
+    if(w.status==='warning')return{k:'warn',t:[T.check[0],T.check[1].replace('{n}',w.persist.count)],r};
+    return{k:'ok',t:w.state==='idle'?T.idle:T.workload,r}}
+  const m=ACT.mode;
+  if(m==='covert'){const n=Math.min(3,Math.floor(ACT.since/1.2));if(n>=3)return{k:'bad',t:T.alert,r:0.96};return{k:'warn',t:[T.check[0],T.check[1].replace('{n}',Math.max(1,n))],r:0.55+n*0.13}}
+  if(m==='workload')return{k:'ok',t:T.workload,r:0.38+0.08*Math.sin(performance.now()/700)};
+  return{k:'ok',t:T.idle,r:0.2}}
+function traceData(){return liveData()&&NET.win.waveform?NET.win.waveform.cur:ACT.hist}
+function drawTrace(ctx,w,h,pad,color,gridc,lw){
+  ctx.strokeStyle=gridc;ctx.lineWidth=1;ctx.beginPath();
+  for(let i=1;i<4;i++){const y=pad+(h-2*pad)*i/4;ctx.moveTo(0,y);ctx.lineTo(w,y)}
+  for(let i=1;i<8;i++){const x=w*i/8;ctx.moveTo(x,pad);ctx.lineTo(x,h-pad)}ctx.stroke();
+  const H=traceData(),n=H.length;if(n<2)return;
+  ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.beginPath();
+  for(let i=0;i<n;i++){const x=i/(n-1)*w,y=h-pad-(H[i]/1.15)*(h-2*pad);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}
+function drawScope(){
+  const cv=$('#scopeCv'),dpr=Math.min(devicePixelRatio||1,2),w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);x.direction='ltr';
+  const st=status();
+  drawTrace(x,w,h,6,st.k==='bad'?cssv('--alert'):cssv('--signal'),cssv('--line'),1.8);
+  if(st.k==='bad'&&!liveData()&&!NET.demoFired){NET.demoFired=true;NET.demoN++;
+    const a={id:'A-'+String(NET.demoN).padStart(4,'0'),ts:new Date().toISOString(),device:'WS-LAB-03',score:0.97,
+      reason:{code:'periodicBurst',top_features:['onoff_regularity','periodicity']}};NET.lastAlert=a;showToast(a,false)}
+  const v=$('#verdict');v.className='verdict '+st.k;$('#vTitle').textContent=st.t[0];$('#vText').textContent=st.t[1];
+  $('#vBar').style.width=Math.round(Math.max(0,Math.min(1,st.r))*100)+'%';
+  return st}
+function drawLaptop(st){
+  const x=scr.getContext('2d'),w=scr.width,h=scr.height;
+  x.fillStyle='#08141c';x.fillRect(0,0,w,h);
+  x.fillStyle='#0f2430';x.fillRect(0,0,w,64);
+  x.fillStyle='#3fe0c5';x.font='600 30px "IBM Plex Sans Arabic",sans-serif';x.textAlign='left';x.fillText('Sarmad · EM-Sentinel',28,43);
+  const col=st.k==='bad'?'#ff6b5e':st.k==='warn'?'#f6b94c':'#3fe0c5';
+  x.fillStyle=col;x.beginPath();x.arc(w-200,32,9,0,7);x.fill();
+  x.font='600 24px sans-serif';x.fillText(st.k==='bad'?'ALERT':st.k==='warn'?'CHECKING':'NORMAL',w-180,41);
+  x.save();x.translate(28,96);drawTrace(x,w-56,250,8,col,'#1b3442',3);x.restore();
+  x.fillStyle='#8fa7b0';x.font='22px sans-serif';x.fillText('Carrier envelope · 125.000 MHz',28,384);
+  x.fillStyle='#1b3442';x.fillRect(28,408,w-56,16);x.fillStyle=col;x.fillRect(28,408,(w-56)*Math.max(0,Math.min(1,st.r)),16);
+  x.fillStyle='#8fa7b0';x.fillText('rhythm score',28,458);
+  if(st.k==='bad'&&NET.lastAlert){x.fillStyle='#ff6b5e';x.font='600 22px sans-serif';x.textAlign='right';x.fillText('Alert '+NET.lastAlert.id+' sent',w-28,458);x.textAlign='left'}
+  scrTex.needsUpdate=true}
+
+/* ================= tags projection ================= */
+const tmpV=new THREE.Vector3();
+function placeTags(){const r=canvas.getBoundingClientRect();
+  document.querySelectorAll('#tags .tag').forEach((el,i)=>{tmpV.copy(DEVS[i].anchor).project(camera);
+    const vis=tmpV.z<1&&Math.abs(tmpV.x)<1.1&&Math.abs(tmpV.y)<1.1;el.style.display=vis?'flex':'none';
+    el.style.left=((tmpV.x+1)/2*r.width)+'px';el.style.top=((1-tmpV.y)/2*r.height)+'px'})}
+
+/* ================= loop ================= */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;
+  const narrow=w/h<0.85;camera.fov=narrow?52:38;camera.updateProjectionMatrix();
+  if(narrow){HOME.pos.set(1.6,11.5,13.2);HOME.tgt.set(0.1,-0.4,0.6)}else{HOME.pos.set(4.2,5.4,8.4);HOME.tgt.set(0.6,0.3,0.2)}}
+addEventListener('resize',resize);
+let last=performance.now(),ringAcc=0,partAcc=0,ledT=0,uiT=0,st=status();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  stepActivity(dt);
+  const a=curA();
+  // emission: rings follow the activity; every rising edge launches a strong ring
+  cpuGlowMat.emissiveIntensity=0.15+a*1.1;probeMat.emissiveIntensity=0.15+a*0.6;
+  if(ACT.rise){spawnRing(Math.min(1,a+0.1));ACT.rise=false;for(let k=0;k<2;k++)spawnPart(coax,1.5)}
+  ringAcc+=dt*(0.4+a*2.2);if(ringAcc>1){ringAcc=0;spawnRing(a*0.6)}
+  partAcc+=dt*(0.6+a*3);if(partAcc>1){partAcc=0;spawnPart(coax,1.5)}
+  RINGS.forEach(r=>{if(!r.visible)return;const u=r.userData;u.t+=dt/u.life;if(u.t>=1){r.visible=false;return}
+    const s=0.25+u.t*1.9;r.scale.set(s,s,s);r.material.opacity=(1-u.t)*(0.25+0.75*u.amp)});
+  PARTS.forEach(p=>{if(!p.visible)return;const u=p.userData;u.u+=dt/u.dur;
+    if(u.u>=1){p.visible=false;if(u.path===coax){spawnPart(usb,0.7);ledT=0.12}return}
+    p.position.copy(u.path.getPointAt(Math.min(1,u.u)))});
+  ledT-=dt;if(ledT>0)ledMat.color.set(0xffffff);else ledMat.color.copy(SIG);
+  // camera flight
+  if(fly){fly.t+=dt/fly.dur;const k=ease(Math.min(1,fly.t));camera.position.lerpVectors(fly.p0,fly.p1,k);controls.target.lerpVectors(fly.t0,fly.t1,k);if(fly.t>=1)fly=null}
+  // tour timing
+  if(tour.on){tour.t+=dt;const d=STEP_SEC[tour.step]||12;$('#progBar').style.width=Math.min(100,tour.t/d*100)+'%';
+    if(tour.t>=d){tour.t=0;const n=tour.step+1;if(n>=L().tourSteps.length){tour.on=false;$('#card').hidden=true;selected=-1;setMode('idle');buildUI();flyTo(HOME)}else showStep(n)}}
+  controls.update();
+  uiT+=dt;if(uiT>1/30){uiT=0;st=drawScope();drawLaptop(st);renderConn()}
+  renderer.render(scene,camera);placeTags();
+  requestAnimationFrame(loop)}
+
+themeScene();buildUI();resize();camera.position.copy(HOME.pos);controls.target.copy(HOME.tgt);setMode('idle');stepActivity(0.016/SLOW,true);ACT.since=0;
+if(!reduce){controls.autoRotate=true;controls.autoRotateSpeed=0.35}
+connectBackend();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

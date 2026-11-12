@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سرمد · محاكي الإشارات</title>
+<style>
+:root{--bg:#070f17;--panel:#0e1f2d;--panel2:#0b1a27;--border:#1b3444;--text:#dfeaf1;--muted:#8098a8;--faint:#5f7889;
+  --accent:#26c3db;--good:#2fd98b;--good-bg:#0e3327;--warn:#f3b454;--warn-bg:#352512;--bad:#ff5d6c;--bad-bg:#33151a;color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--bg:#eef3f7;--panel:#fff;--panel2:#f5f8fb;--border:#dde6ee;--text:#152430;--muted:#5d7180;--faint:#8697a4;
+  --accent:#0e8fa6;--good:#128a5a;--good-bg:#e2f3ea;--warn:#b7791f;--warn-bg:#fbf0dd;--bad:#cc3346;--bad-bg:#fbe7ea;color-scheme:light}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 Tahoma,"Segoe UI",system-ui,sans-serif;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+header h1{margin:0;font-size:20px}
+header p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.sp{flex:1}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:14.5px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select,button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:8px 11px}
+input[type=text]{min-width:260px;direction:ltr;font-family:ui-monospace,Consolas,monospace}
+button{cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent);color:#04202a;font-weight:700}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+.ok{background:var(--good-bg);color:var(--good)}.warn{background:var(--warn-bg);color:var(--warn)}.bad{background:var(--bad-bg);color:var(--bad)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}
+.sc{text-align:start;padding:11px 12px;border-radius:11px}
+.sc b{display:block}.sc small{color:var(--muted)}
+.sc.on{outline:2px solid var(--accent);background:var(--panel)}
+.sc.atk b{color:var(--bad)}
+.modes button.on{background:var(--accent);color:#04202a;border-color:var(--accent);font-weight:700}
+.big{font-size:22px;font-weight:700}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+canvas{width:100%;height:170px;display:block;background:var(--panel2);border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:start}
+th{color:var(--muted);font-weight:600}
+td.m{font-family:ui-monospace,Consolas,monospace;direction:ltr;text-align:end}
+.two{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+@media(max-width:900px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>سرمد · محاكي الإشارات <span style="color:var(--muted);font-weight:400">(Laptop 1)</span></h1>
+  <p>يحاكي ما يلتقطه جهاز SDR بجانب جهاز معزول، ويرسل عينات I/Q <b>خام فقط</b> إلى الباك اند. لا يرسل نوع الإشارة أبدًا.</p></div>
+  <div class="sp"></div>
+  <span class="pill warn" id="conn">غير متصل</span>
+</header>
+
+<div class="card">
+  <h2>الاتصال بالباك اند (Laptop 2)</h2>
+  <div class="row">
+    <input type="text" id="url" spellcheck="false">
+    <button class="pri" id="connect">اتصال</button>
+    <button id="pause">إيقاف مؤقت</button>
+    <span class="note" style="margin:0">المُرسَل: <b id="sent">0</b> نافذة · نقطة المجس: <b id="probe">CPU</b></span>
+  </div>
+  <p class="note">مثال: <span dir="ltr">ws://192.168.1.15:8000/ws/sim</span> — الجهازان على نفس الشبكة (يفضَّل هوتسبوت جوال).</p>
+</div>
+
+<div class="card">
+  <h2>وضع التشغيل</h2>
+  <div class="row modes" id="modes">
+    <button data-mode="demo">سيناريو العرض (60 ث)</button>
+    <button data-mode="random">عشوائي (للتقييم)</button>
+    <button data-mode="manual">يدوي</button>
+  </div>
+  <p class="note" id="modeNote"></p>
+  <div class="grid" id="scenarios" style="margin-top:10px"></div>
+</div>
+
+<div class="two">
+  <div class="card">
+    <h2>الحقيقة الأرضية (تظهر هنا فقط)</h2>
+    <div class="row" style="margin-bottom:8px">
+      <span>الحالة الحالية:</span><span class="big" id="curName">—</span><span class="pill" id="curLabel"></span>
+      <div class="sp"></div><span class="note" style="margin:0" id="left"></span>
+    </div>
+    <canvas id="cv"></canvas>
+    <p class="note">منحنى نشاط المعالج/الذاكرة a(t) خلال آخر نافذة (16 ms). هذه المعلومة تبقى في المحاكي ولا تُرسَل.</p>
+    <div class="row" style="margin-top:10px">
+      <label>نسبة الإشارة للضوضاء (SNR): <b id="snrV">10</b> dB</label>
+      <input type="range" id="snr" min="0" max="20" step="1" value="10" style="flex:1">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>معدل الإرسال:</label>
+      <select id="rate"><option value="1" selected>نافذة / ثانية</option><option value="2">نافذتان / ثانية</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row"><h2 style="margin:0">سجل الحقيقة (للتقييم)</h2><div class="sp"></div>
+      <button id="dl">تنزيل CSV</button><button id="clr">مسح</button></div>
+    <p class="note">بعد التجربة: <span dir="ltr">python score_run.py truth.csv logs/decisions-….csv</span></p>
+    <table><thead><tr><th>#</th><th>الوقت</th><th>السيناريو</th><th>التصنيف</th></tr></thead><tbody id="log"></tbody></table>
+  </div>
+</div>
+</div>
+
+<script>
+/* ===== signal model — same physics as sarmad/signals.py ===== */
+const FS=2048000, N=32768, CENTER_MHZ=125.0;
+const F_MAIN=150e3, F_OTHER=-600e3, F_HARM=450e3;
+const PROBE_GAIN={CPU:1.0,RAM:0.8,VRM:0.6,Cables:0.4};
+const SC={
+  idle:{ar:'خمول',sub:'الجهاز شبه متوقف',atk:0},
+  active:{ar:'استخدام نشط',sub:'حمل ثقيل غير منتظم',atk:0},
+  background:{ar:'خدمات خلفية',sub:'نبضات عشوائية متفرقة',atk:0},
+  boot:{ar:'إقلاع',sub:'نشاط مرتفع ومتقلب',atk:0},
+  interference:{ar:'تداخل بيئي',sub:'جوال / واي فاي قريب',atk:0},
+  covert_fast:{ar:'قناة خفية سريعة',sub:'تشغيل/إطفاء منتظم ~2 kbit/s',atk:1},
+  covert_stealth:{ar:'قناة خفية متخفية',sub:'~1 kbit/s بعمق ضعيف',atk:1}};
+const ORDER=Object.keys(SC);
+const DEMO=[['idle',15],['active',15],['covert_fast',15],['idle',15]];
+const RANDW=[.16,.16,.14,.08,.14,.16,.16];
+
+const U=(a=0,b=1)=>a+(b-a)*Math.random();
+const randint=(a,b)=>Math.floor(U(a,b));
+let _g=null;
+function gauss(){if(_g!==null){const v=_g;_g=null;return v}let u=0,v=0;while(u===0)u=Math.random();v=Math.random();
+  const r=Math.sqrt(-2*Math.log(u)),t=2*Math.PI*v;_g=r*Math.sin(t);return r*Math.cos(t)}
+const expo=m=>-m*Math.log(1-Math.random());
+function poisson(l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=Math.random()}while(p>L);return k-1}
+function smooth(x,k){if(k<=1)return x;const n=x.length,c=new Float64Array(n+1);for(let i=0;i<n;i++)c[i+1]=c[i]+x[i];
+  const y=new Float64Array(n),h=Math.floor(k/2);for(let i=0;i<n;i++){const a=Math.max(0,i-h),b=Math.min(n,i-h+k);y[i]=(c[b]-c[a])/k}return y}
+function segments(n,meanLen,lo,hi,minLen=50){const a=new Float64Array(n);let i=0;
+  while(i<n){const L=Math.max(minLen,Math.floor(expo(meanLen)));const v=U(lo,hi);for(let j=i;j<Math.min(n,i+L);j++)a[j]=v;i+=L}return a}
+function activity(sc){
+  const ms=FS/1000;let w=new Float64Array(N);for(let i=0;i<N;i++)w[i]=gauss();
+  w=smooth(w,Math.floor(0.3*ms));let s=0,m=0;for(const v of w)m+=v;m/=N;for(const v of w)s+=(v-m)**2;s=Math.sqrt(s/N)+1e-12;
+  for(let i=0;i<N;i++)w[i]/=s;
+  let a=new Float64Array(N);
+  if(sc==='idle'||sc==='interference'){for(let i=0;i<N;i++)a[i]=0.22+0.025*w[i];
+    if(Math.random()<0.3){const st=randint(0,N-Math.floor(0.4*ms)),L=Math.floor(U(0.05,0.4)*ms),add=U(0.05,0.15);for(let i=st;i<Math.min(N,st+L);i++)a[i]+=add}}
+  else if(sc==='active'){a=segments(N,0.6*ms,0.30,1.0);for(let i=0;i<N;i++)a[i]+=0.04*w[i]}
+  else if(sc==='background'){for(let i=0;i<N;i++)a[i]=0.24+0.03*w[i];const k=poisson(6);
+    for(let q=0;q<k;q++){const L=Math.floor(U(0.05,0.6)*ms),st=randint(0,Math.max(1,N-L)),add=U(0.2,0.55);for(let i=st;i<Math.min(N,st+L);i++)a[i]+=add}}
+  else if(sc==='boot'){a=segments(N,0.25*ms,0.55,1.0);for(let i=0;i<N;i++)a[i]+=0.05*w[i]}
+  else{const [Ts,lo,hi]=sc==='covert_fast'?[0.5e-3,0.22,0.90]:[1.0e-3,0.22,0.45];
+    const sym=Math.floor(Ts*FS),off=randint(0,sym),nsym=Math.floor((N+off)/sym)+2,bits=[];
+    for(let k=0;k<nsym;k++)bits.push(Math.random()<0.5?1:0);
+    for(let i=0;i<N;i++)a[i]=(bits[Math.floor((i+off)/sym)]?hi:lo)+0.02*w[i]}
+  a=smooth(a,Math.floor(0.02*ms));for(let i=0;i<N;i++)a[i]=Math.min(1.2,Math.max(0,a[i]));
+  return a}
+function makeWindow(sc,snr,probe){
+  const a=activity(sc),g=PROBE_GAIN[probe]||1,iq=new Float32Array(2*N);
+  const ph=[U(0,6.2832),U(0,6.2832),U(0,6.2832)],df=[gauss()*300,gauss()*300,gauss()*300];
+  let fi=0,ai=0,gate=null,phi=0;
+  if(sc==='interference'){fi=(Math.random()<0.5?-1:1)*U(220e3,900e3);ai=U(0.3,0.8);phi=U(0,6.3);gate=segments(N,1.5e-3*FS,0,1)}
+  const sd=Math.sqrt((1/Math.pow(10,snr/10))/2),w0=2*Math.PI*(F_MAIN+df[0])/FS,w1=2*Math.PI*(F_OTHER+df[1])/FS,w2=2*Math.PI*(F_HARM+df[2])/FS,wi=2*Math.PI*fi/FS;
+  for(let n=0;n<N;n++){const A=g*a[n];
+    let re=A*Math.cos(w0*n+ph[0])+0.35*Math.cos(w1*n+ph[1])+0.15*A*Math.cos(w2*n+ph[2]);
+    let im=A*Math.sin(w0*n+ph[0])+0.35*Math.sin(w1*n+ph[1])+0.15*A*Math.sin(w2*n+ph[2]);
+    if(gate&&gate[n]>0.5){re+=ai*Math.cos(wi*n+phi);im+=ai*Math.sin(wi*n+phi)}
+    iq[2*n]=re+sd*gauss();iq[2*n+1]=im+sd*gauss()}
+  return {iq,a}}
+
+/* ===== framing: [uint32 header length][JSON header][pad to 4][float32 I,Q,...] ===== */
+function frame(header,iq){const h=new TextEncoder().encode(JSON.stringify(header));const pad=(4-((4+h.length)%4))%4;
+  const buf=new ArrayBuffer(4+h.length+pad+iq.byteLength),dv=new DataView(buf);dv.setUint32(0,h.length,true);
+  const u8=new Uint8Array(buf);u8.set(h,4);for(let i=0;i<pad;i++)u8[4+h.length+i]=32;u8.set(new Uint8Array(iq.buffer),4+h.length+pad);return buf}
+
+/* ===== app ===== */
+const $=s=>document.querySelector(s);
+const st={ws:null,mode:'demo',manual:'idle',probe:'CPU',seq:0,paused:false,log:[],timer:null,
+  sched:{sc:'idle',left:0,step:0}};
+const defUrl=location.protocol.startsWith('http')?`ws://${location.host}/ws/sim`:'ws://localhost:8000/ws/sim';
+$('#url').value=(()=>{try{return localStorage.getItem('sim_url')||defUrl}catch(e){return defUrl}})();
+
+function setConn(t,c){$('#conn').textContent=t;$('#conn').className='pill '+c}
+function connect(){
+  try{st.ws&&st.ws.close()}catch(e){}
+  const url=$('#url').value.trim();try{localStorage.setItem('sim_url',url)}catch(e){}
+  let w;try{w=new WebSocket(url)}catch(e){setConn('عنوان غير صالح','bad');return}
+  w.binaryType='arraybuffer';st.ws=w;setConn('جارٍ الاتصال…','warn');
+  w.onopen=()=>{if(st.ws===w)setConn('متصل بالباك اند','ok')};
+  w.onclose=()=>{if(st.ws===w){setConn('غير متصل','bad');st.ws=null}};
+  w.onerror=()=>setConn('فشل الاتصال — تحقق من العنوان والشبكة والجدار الناري','bad');
+  w.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.type==='config'&&m.probe){st.probe=m.probe;$('#probe').textContent=m.probe}
+    if(m.type==='scenario'&&SC[m.scenario]){st.manual=m.scenario;setMode('manual');st.sched.sc=m.scenario;renderCur();
+      $('#modeNote').textContent='يتحكم فيه الآن مختبر سرمد ثلاثي الأبعاد: '+SC[m.scenario].ar}}catch(err){}};
+}
+function nextScenario(){
+  if(st.mode==='manual')return {sc:st.manual,left:Infinity};
+  if(st.mode==='demo'){const [sc,d]=DEMO[st.sched.step%DEMO.length];st.sched.step++;return {sc,left:d}}
+  let r=Math.random(),i=0;while(i<RANDW.length-1&&r>RANDW[i]){r-=RANDW[i];i++}
+  return {sc:ORDER[i],left:randint(10,21)}}
+function tick(){
+  if(st.paused)return;
+  const per=1/(+$('#rate').value);
+  if(st.mode==='manual'){st.sched.sc=st.manual;st.sched.left=Infinity}
+  else if(st.sched.left<=0){const n=nextScenario();st.sched.sc=n.sc;st.sched.left=n.left}
+  const sc=st.sched.sc,snr=+$('#snr').value;
+  const {iq,a}=makeWindow(sc,snr,st.probe);
+  draw(a);renderCur();
+  if(st.ws&&st.ws.readyState===1){
+    st.seq++;const ts=new Date().toISOString();
+    st.ws.send(frame({type:'samples',seq:st.seq,ts,fs:FS,center_mhz:CENTER_MHZ,n:N,probe:st.probe,format:'f32_iq'},iq));
+    st.log.push([st.seq,ts,sc,SC[sc].atk?'anomaly':'normal',snr,st.probe]);
+    $('#sent').textContent=st.seq;renderLog()}
+  st.sched.left-=per}
+function restartTimer(){clearInterval(st.timer);st.timer=setInterval(tick,1000/(+$('#rate').value))}
+
+function draw(a){const cv=$('#cv'),dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);x.direction='ltr';
+  const cs=getComputedStyle(document.documentElement),col=SC[st.sched.sc].atk?cs.getPropertyValue('--bad'):cs.getPropertyValue('--accent');
+  x.strokeStyle=cs.getPropertyValue('--border');x.beginPath();for(const v of [0.25,0.5,0.75,1]){const y=H-8-v/1.2*(H-16);x.moveTo(0,y);x.lineTo(W,y)}x.stroke();
+  x.strokeStyle=col;x.lineWidth=1.6;x.beginPath();const step=Math.max(1,Math.floor(a.length/W));
+  for(let i=0,j=0;i<a.length;i+=step,j++){const y=H-8-a[i]/1.2*(H-16),xx=i/a.length*W;j?x.lineTo(xx,y):x.moveTo(xx,y)}x.stroke();
+  x.fillStyle=cs.getPropertyValue('--muted');x.font='11px ui-monospace,monospace';x.fillText('a(t)  0 → 16 ms',8,14)}
+function renderCur(){const s=SC[st.sched.sc];$('#curName').textContent=s.ar;
+  $('#curLabel').textContent=s.atk?'هجوم (anomaly)':'طبيعي (normal)';$('#curLabel').className='pill '+(s.atk?'bad':'ok');
+  $('#left').textContent=isFinite(st.sched.left)?`المتبقي ~${Math.max(0,Math.ceil(st.sched.left))} ث`:'';
+  document.querySelectorAll('.sc').forEach(b=>b.classList.toggle('on',b.dataset.sc===st.sched.sc))}
+function renderLog(){$('#log').innerHTML=st.log.slice(-8).reverse().map(r=>`<tr><td class="m">${r[0]}</td><td class="m">${r[1].slice(11,19)}</td><td>${SC[r[2]].ar}</td><td><span class="pill ${r[3]==='anomaly'?'bad':'ok'}">${r[3]}</span></td></tr>`).join('')}
+function setMode(m){st.mode=m;st.sched.left=0;st.sched.step=0;
+  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  $('#modeNote').textContent={demo:'خمول 15 ث ← استخدام نشط 15 ث (يجب ألا يُنبّه) ← قناة خفية 15 ث (يجب أن يُنبّه) ← خمول 15 ث، ويتكرر.',
+    random:'سيناريو عشوائي كل 10–20 ثانية — شغّله عدة دقائق ثم نزّل سجل الحقيقة لقياس الأداء.',manual:'اختر السيناريو من الأزرار، ويبقى حتى تغيّره.'}[m]}
+
+$('#scenarios').innerHTML=ORDER.map(k=>`<button class="sc ${SC[k].atk?'atk':''}" data-sc="${k}"><b>${SC[k].ar}</b><small>${SC[k].sub}</small></button>`).join('');
+document.querySelectorAll('.sc').forEach(b=>b.onclick=()=>{st.manual=b.dataset.sc;setMode('manual');st.sched.sc=st.manual;renderCur()});
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+$('#snr').oninput=e=>$('#snrV').textContent=e.target.value;
+$('#rate').onchange=restartTimer;
+$('#connect').onclick=connect;
+$('#pause').onclick=()=>{st.paused=!st.paused;$('#pause').textContent=st.paused?'استئناف':'إيقاف مؤقت'};
+$('#clr').onclick=()=>{st.log=[];renderLog()};
+$('#dl').onclick=()=>{const csv='seq,ts,scenario,label,snr_db,probe\n'+st.log.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='truth-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.csv';a.click()};
+setMode('demo');restartTimer();connect();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "windows": 859,
+  "window_detection_rate": 1.0,
+  "window_false_positive_rate": 0.0014727540500736377,
+  "events": 2,
+  "events_caught": 2,
+  "latency_median_windows": 3,
+  "false_alerts": 0,
+  "per_scenario": {
+    "idle": [
+      0,
+      450
+    ],
+    "active": [
+      1,
+      229
+    ],
+    "covert_fast": [
+      180,
+      180
+    ]
+  },
+  "truth_file": "logs/truth-20261112-145123.csv",
+  "decisions_file": "logs/decisions-20261112-145122.csv"
+}

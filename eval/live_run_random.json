@@ -1,0 +1,33 @@
+{
+  "windows": 1073,
+  "window_detection_rate": 0.9590643274853801,
+  "window_false_positive_rate": 0.0,
+  "events": 3,
+  "events_caught": 3,
+  "latency_median_windows": 3,
+  "false_alerts": 0,
+  "per_scenario": {
+    "covert_stealth": [
+      136,
+      150
+    ],
+    "covert_fast": [
+      192,
+      192
+    ],
+    "background": [
+      0,
+      102
+    ],
+    "idle": [
+      0,
+      462
+    ],
+    "interference": [
+      0,
+      167
+    ]
+  },
+  "truth_file": "logs/truth-20261112-144804.csv",
+  "decisions_file": "logs/decisions-20261112-144803.csv"
+}
